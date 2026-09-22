@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olymp Matix Pro Bot - Deriv Edition</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { font-size: 1.5rem; color: #38bdf8; margin-bottom: 5px; }
+        header p { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card h2 { font-size: 1.1rem; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: #cbd5e1; }
+        
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+        select, input { width: 100%; padding: 8px 12px; background-color: #0f172a; border: 1px solid var(--border-color); color: white; border-radius: 6px; font-size: 0.9rem; }
+        
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: opacity 0.2s; margin-top: 5px; }
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .btn-success { background-color: var(--accent-green); color: white; }
+        .btn-danger { background-color: var(--accent-red); color: white; }
+        .btn:hover { opacity: 0.9; }
+
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background-color: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; text-align: center; }
+        .stat-box span { display: block; font-size: 0.75rem; color: var(--text-muted); }
+        .stat-box strong { font-size: 1.1rem; color: #38bdf8; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { padding: 8px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; }
+        
+        select.result-select { padding: 4px; font-size: 0.8rem; border-radius: 4px; font-weight: bold; }
+        .select-w { background-color: #14532d; color: #4ade80; border: 1px solid #22c55e; }
+        .select-l { background-color: #7f1d1d; color: #f87171; border: 1px solid #ef4444; }
+        
+        .log-box { background-color: #090d16; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.75rem; height: 120px; overflow-y: auto; color: #34d399; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Olymp Matix Pro Bot</h1>
+        <p>Koneksyon Deriv API + Masaniello + Multi-Sinyal</p>
+    </header>
+
+    <!-- Deriv Connection Card -->
+    <div class="card">
+        <h2>1. Koneksyon ak Deriv</h2>
+        <div class="form-group">
+            <label>API Token (soti nan Deriv Settings):</label>
+            <input type="password" id="apiToken" placeholder="Antre API Token ou la...">
+        </div>
+        <button class="btn btn-primary" onclick="connectDeriv()">Konekte ak Kont Deriv</button>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="card">
+        <h2>2. Paramèt Sinyal ak Estrateji</h2>
+        <div class="form-group">
+            <label>Chwazi Estrateji Sinyal Prensipal:</label>
+            <select id="signalStrategy">
+                <option value="stoch">Stochastic (< 20 / > 80)</option>
+                <option value="rsi">RSI (< 30 / > 70)</option>
+                <option value="candle">Suiv Bouji Anvan (Trend Suivant)</option>
+                <option value="bb">Bollinger Bands Bounce</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Aktif / Asè (Market):</label>
+            <select id="marketSymbol">
+                <option value="R_100">Volatility 100 Index</option>
+                <option value="R_75">Volatility 75 Index</option>
+                <option value="R_50">Volatility 50 Index</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Masaniello / Money Management Card -->
+    <div class="card">
+        <h2>3. Masaniello Money Management</h2>
+        <div class="dashboard-grid">
+            <div class="stat-box">
+                <span>Total Capital</span>
+                <strong id="lblCapital">$500.00</strong>
+            </div>
+            <div class="stat-box">
+                <span>Status Bòt</span>
+                <strong id="lblStatus" style="color: #f87171;">Dekonekte</strong>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex:1;">
+                <label>Kapital Kòmansman ($)</label>
+                <input type="number" id="inputCapital" value="500">
+            </div>
+            <div style="flex:1;">
+                <label>Peman Broker (%)</label>
+                <input type="number" id="inputPayout" value="82">
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="initMasaniello()">Rekòmanse Sesyon Masaniello</button>
+    </div>
+
+    <!-- Live Execution & Table -->
+    <div class="card">
+        <h2>4. Kontwòl ak Tablo Tranzaksyon</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn btn-success" onclick="startBot()" id="btnStart">Kòmanse Bòt</button>
+            <button class="btn btn-danger" onclick="stopBot()" id="btnStop" disabled>Kanpe Bòt</button>
+        </div>
+        
+        <div style="max-height: 220px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Rezilta (W/L)</th>
+                        <th>Montan ($)</th>
+                        <th>Retou</th>
+                        <th>Kapital Aktyèl</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+        <h2>Live Logs</h2>
+        <div class="log-box" id="logBox">
+            [System] Tanpri antre API Token ou epi konekte sou Deriv...
+        </div>
+    </div>
+</div>
+
+<script>
+let ws;
+let botRunning = false;
+let capital = 500;
+let payout = 0.82;
+let schedule = [];
+
+function log(msg) {
+    const box = document.getElementById('logBox');
+    box.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+}
+
+function initMasaniello() {
+    capital = parseFloat(document.getElementById('inputCapital').value);
+    payout = parseFloat(document.getElementById('inputPayout').value) / 100;
+    document.getElementById('lblCapital').innerText = '$' + capital.toFixed(2);
+    
+    schedule = [
+        { amt: 1.09, res: '-' },
+        { amt: 2.27, res: '-' },
+        { amt: 4.73, res: '-' },
+        { amt: 9.88, res: '-' },
+        { amt: 20.62, res: '-' },
+        { amt: 43.03, res: '-' },
+        { amt: 89.80, res: '-' },
+        { amt: 187.42, res: '-' },
+        { amt: 141.16, res: '-' },
+        { amt: 0.00, res: '-' }
+    ];
+    renderTable();
+    log("Nouvo sesyon Masaniello kreye avèk siksè.");
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    let runningCap = capital;
+    
+    schedule.forEach((item, idx) => {
+        let returnVal = 0;
+        if(item.res === 'W') returnVal = item.amt * payout;
+        if(item.res === 'L') returnVal = -item.amt;
+        if(item.res !== '-') runningCap += returnVal;
+
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>
+                <select class="result-select ${item.res === 'W' ? 'select-w' : (item.res === 'L' ? 'select-l' : '')}" onchange="updateResult(${idx}, this.value)">
+                    <option value="-" ${item.res === '-' ? 'selected' : ''}>-</option>
+                    <option value="W" ${item.res === 'W' ? 'selected' : ''}>W</option>
+                    <option value="L" ${item.res === 'L' ? 'selected' : ''}>L</option>
+                </select>
+            </td>
+            <td>$${item.amt.toFixed(2)}</td>
+            <td style="color: ${returnVal >= 0 ? '#4ade80' : '#f87171'}">${item.res === '-' ? '-' : (returnVal >= 0 ? '+$' : '-$') + Math.abs(returnVal).toFixed(2)}</td>
+            <td>$${runningCap.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    document.getElementById('lblCapital').innerText = '$' + runningCap.toFixed(2);
+}
+
+function updateResult(index, val) {
+    schedule[index].res = val;
+    renderTable();
+    log(`Tranzaksyon #${index + 1} mete ajou kòm: ${val}`);
+}
+
+function connectDeriv() {
+    const token = document.getElementById('apiToken').value;
+    if (!token) {
+        alert("Tanpri antre API Token ou an premye!");
+        return;
+    }
+
+    log("Ap konekte ak sèvè Deriv...");
+    ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+
+    ws.onopen = function() {
+        log("Konekte! Ap voye otantifikasyon...");
+        ws.send(JSON.stringify({ authorize: token }));
+    };
+
+    ws.onmessage = function(event) {
+        let data = JSON.parse(event.data);
+        if (data.msg_type === 'authorize') {
+            if (data.error) {
+                log("Erè Otantifikasyon: " + data.error.message);
+                document.getElementById('lblStatus').innerText = 'Erè Token';
+                document.getElementById('lblStatus').style.color = '#ef4444';
+            } else {
+                log(`Otantifikasyon Reyisi! Kont: ${data.authorize.email} (Balans: $${data.authorize.balance})`);
+                document.getElementById('lblStatus').innerText = 'Konekte';
+                document.getElementById('lblStatus').style.color = '#22c55e';
+            }
+        }
+    };
+
+    ws.onerror = function() {
+        log("Erè nan koneksyon WebSocket la.");
+    };
+}
+
+function startBot() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert("Tanpri konekte ak Deriv an premye anvan ou kòmanse bòt la!");
+        return;
+    }
+    botRunning = true;
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    log("Bòt la kòmanse veye mache a ak analize endikatè yo...");
+}
+
+function stopBot() {
+    botRunning = false;
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStop').disabled = true;
+    log("Bòt la sispann.");
+}
+
+initMasaniello();
+</script>
+</body>
+</html>
